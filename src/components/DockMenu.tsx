@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Compass, MessageSquare, User } from 'lucide-react';
+import { MessageSquare, User } from 'lucide-react';
 
 export type DockTab = 'home' | 'profile' | 'chat';
 
@@ -19,7 +19,7 @@ export const DockMenu: React.FC<DockMenuProps> = ({
     {
       id: 'home',
       label: 'Home',
-      icon: Compass,
+      icon: User,
     },
     {
       id: 'profile',
@@ -57,11 +57,15 @@ export const DockMenu: React.FC<DockMenuProps> = ({
                   : 'text-stone-300 hover:text-white hover:bg-stone-800/80 active:scale-95'
               }`}
             >
-              <Icon
-                className={`w-4 h-4 transition-transform ${
-                  isActive ? 'text-stone-900 stroke-[2.2]' : 'text-stone-400 stroke-[1.8]'
-                }`}
-              />
+              {id === 'home' ? (
+                <img src="/rove-logo.jpg" alt="" className="h-4 w-4 rounded-full object-cover" />
+              ) : (
+                <Icon
+                  className={`w-4 h-4 transition-transform ${
+                    isActive ? 'text-stone-900 stroke-[2.2]' : 'text-stone-400 stroke-[1.8]'
+                  }`}
+                />
+              )}
               <span className="tracking-tight">{label}</span>
 
               {badge && !isActive && (

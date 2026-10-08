@@ -71,10 +71,7 @@ function RoveWorkspace() {
             onClick={() => handleDockTabChange('home')}
             aria-label="Rove home"
           >
-            <span className="brand-mark"><Compass size={18} strokeWidth={1.7} /></span>
-            <span className="brand-wordmark">ROVE</span>
-            <span className="brand-divider" />
-            <span className="brand-caption">Travel, thoughtfully</span>
+            <img className="brand-logo" src="/rove-logo.jpg" alt="Rove" />
           </button>
 
           <div className="header-actions">
