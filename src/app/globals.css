@@ -72,6 +72,7 @@ button { font: inherit; }
 .site-header-inner { max-width: 1440px; height: 74px; margin: 0 auto; padding: 0 42px; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--rove-ink); background: none; border: 0; cursor: pointer; padding: 0; white-space: nowrap; }
 .brand-logo { display: block; width: 36px; height: 36px; object-fit: contain; }
+.rove-logo-image { filter: invert(1); background: #fff; }
 .brand-mark { display: inline-flex; align-items: center; justify-content: center; width: 31px; height: 31px; border-radius: 50%; color: #fff; background: var(--rove-ink); }
 .brand-wordmark { font-family: var(--font-serif), Georgia, serif; font-size: 20px; letter-spacing: .02em; }
 .brand-divider { height: 22px; width: 1px; background: #d5d0c7; }
