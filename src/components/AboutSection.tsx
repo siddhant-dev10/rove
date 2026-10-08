@@ -82,7 +82,7 @@ export const AboutSection: React.FC = () => {
             {/* Brand identity column */}
             <div className="lg:col-span-4 space-y-4">
               <div className="flex items-center gap-2.5">
-                <img src="/rove-logo.jpg" alt="Rove" className="h-8 w-8 rounded-full object-cover" />
+                <img src="rove-logo.jpg" alt="Rove" className="h-8 w-8 rounded-full object-cover" />
                 <span className="font-serif text-xl font-medium tracking-tight text-stone-900">ROVE</span>
                 <span className="text-[10px] uppercase tracking-widest text-stone-400 font-semibold border-l border-stone-300 pl-2">
                   TRAVEL OS
