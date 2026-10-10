@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRove } from '@/context/RoveContext';
 import { BookingPhoto } from '@/types/rove';
 import confetti from 'canvas-confetti';
@@ -58,6 +58,24 @@ export const BookingSummaryModal: React.FC = () => {
   } | null>(null);
   const [customPriceInput, setCustomPriceInput] = useState<string>('');
 
+  const handleClose = useCallback(() => {
+    setIsBookingOpen(false);
+    setIsConfirmed(false);
+    setPreviewPhoto(null);
+    setPriceEditModal(null);
+  }, [setIsBookingOpen]);
+
+  useEffect(() => {
+    if (!isBookingOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isBookingOpen, handleClose]);
+
   if (!isBookingOpen) return null;
 
   const handleConfirm = () => {
@@ -73,13 +91,6 @@ export const BookingSummaryModal: React.FC = () => {
     } catch {
       // Ignore if canvas not supported
     }
-  };
-
-  const handleClose = () => {
-    setIsBookingOpen(false);
-    setIsConfirmed(false);
-    setPreviewPhoto(null);
-    setPriceEditModal(null);
   };
 
   const openPriceEdit = (category: 'hotel' | 'transport' | 'dining' | 'transit', title: string, price: number) => {

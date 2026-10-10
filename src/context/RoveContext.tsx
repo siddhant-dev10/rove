@@ -24,6 +24,30 @@ import {
   destinationBookingCatalog,
   DestinationCatalog,
 } from '@/data/mockData';
+import {
+  initialJaipurTrip,
+  initialManaliTrip,
+  initialKeralaTrip,
+  initialUdaipurTrip,
+  initialKashmirTrip,
+  slideshowBookingCatalog,
+} from '@/data/slideshowTrips';
+
+export const allTripsMap: Record<string, Trip> = {
+  goa: initialGoaTrip,
+  jaipur: initialJaipurTrip,
+  manali: initialManaliTrip,
+  kerala: initialKeralaTrip,
+  udaipur: initialUdaipurTrip,
+  kashmir: initialKashmirTrip,
+  ladakh: initialLadakhTrip,
+  bali: initialBaliTrip,
+};
+
+export const allBookingCatalog: Record<string, DestinationCatalog> = {
+  ...destinationBookingCatalog,
+  ...slideshowBookingCatalog,
+};
 
 interface RoveContextType {
   trip: Trip;
@@ -109,7 +133,7 @@ export const RoveProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [activeSimulation, setActiveSimulation] = useState<'none' | 'rain' | 'cheaper2k' | 'train' | 'budgetUp5k'>('none');
 
   // Booking catalog and selected options
-  const bookingCatalog = destinationBookingCatalog[activeTripId] || destinationBookingCatalog.goa;
+  const bookingCatalog = allBookingCatalog[activeTripId] || allBookingCatalog.goa;
   const [selectedHotelOption, setSelectedHotelOption] = useState<BookingHotelOption>(bookingCatalog.hotels[0]);
   const [selectedTransportOption, setSelectedTransportOption] = useState<BookingTransportOption>(bookingCatalog.transports[0]);
   const [selectedDiningOption, setSelectedDiningOption] = useState<BookingDiningOption>(bookingCatalog.dining[0]);
@@ -453,22 +477,29 @@ export const RoveProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const switchTrip = (tripId: string) => {
     setActiveTripId(tripId);
     setActiveSimulation('none');
-    let selectedTrip: Trip = initialGoaTrip;
+    const selectedTrip: Trip = allTripsMap[tripId] || initialGoaTrip;
     let welcomeText = '';
-    if (tripId === 'ladakh') {
-      selectedTrip = initialLadakhTrip;
+    if (tripId === 'jaipur') {
+      welcomeText = '🏰 Welcome to Jaipur! 4 Nights, 2 Guests, ₹28,000 budget. Featuring Amber Fort, Samode Haveli, and royal desert courtyards.';
+    } else if (tripId === 'manali') {
+      welcomeText = '🌲 Welcome to Manali! 5 Nights, 2 Guests, ₹32,000 budget. High Himalayan trails, cedar pine castle, and mountain alpine air.';
+    } else if (tripId === 'kerala') {
+      welcomeText = '🛶 Welcome to Kerala! 5 Nights, 2 Guests, ₹34,000 budget. Emerald Vembanad backwaters, Kumarakom lake resort, and fresh Malabar seafood.';
+    } else if (tripId === 'udaipur') {
+      welcomeText = '👑 Welcome to Udaipur! 4 Nights, 2 Guests, ₹30,000 budget. Lakeside marble palaces, Jagat Niwas Haveli, and romantic candlelit ghats.';
+    } else if (tripId === 'kashmir') {
+      welcomeText = '🏔️ Welcome to Kashmir! 5 Nights, 2 Guests, ₹36,000 budget. Mirror shikaras on Dal Lake, Sukoon cedar houseboat, and Pir Panjal snow views.';
+    } else if (tripId === 'ladakh') {
       welcomeText = '🏔️ Welcome to Ladakh! I analyzed your high-altitude requirements: 5 Nights, 2 Guests, ₹42,000 budget cap. The route features Leh acclimatization, Khardung La (5,359m), Nubra Valley dunes, and Pangong Tso with ₹2,200 safety buffer.';
     } else if (tripId === 'bali') {
-      selectedTrip = initialBaliTrip;
       welcomeText = '🌺 Welcome to Bali, Indonesia! I calibrated your international island journey: 5 Nights, 2 Guests, ₹68,000 budget. Split-stay across Ubud jungle villas and Uluwatu ocean cliffs eliminates 4 hours of road congestion.';
     } else {
-      selectedTrip = initialGoaTrip;
       welcomeText = '🌴 Switched back to Goa Coastal Odyssey: 3 Nights, 2 Guests, ₹15,000 budget. Route-clustered itinerary with Casa De Vagator stay.';
     }
     setTrip(selectedTrip);
 
     // Sync booking options for destination
-    const newCatalog = destinationBookingCatalog[tripId] || destinationBookingCatalog.goa;
+    const newCatalog = allBookingCatalog[tripId] || allBookingCatalog.goa;
     if (newCatalog.hotels[0]) setSelectedHotelOption(newCatalog.hotels[0]);
     if (newCatalog.transports[0]) setSelectedTransportOption(newCatalog.transports[0]);
     if (newCatalog.dining[0]) setSelectedDiningOption(newCatalog.dining[0]);

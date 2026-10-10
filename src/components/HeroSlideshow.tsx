@@ -125,7 +125,7 @@ export const HERO_SLIDES: HeroSlide[] = [
 const SLIDE_DURATION_MS = 5000;
 
 export const HeroSlideshow: React.FC = () => {
-  const { setIsBookingOpen } = useRove();
+  const { setIsBookingOpen, isBookingOpen, switchTrip, activeTripId } = useRove();
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -134,9 +134,11 @@ export const HeroSlideshow: React.FC = () => {
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const goToSlide = useCallback((index: number) => {
-    setCurrentIdx((index + HERO_SLIDES.length) % HERO_SLIDES.length);
+    const nextIdx = (index + HERO_SLIDES.length) % HERO_SLIDES.length;
+    setCurrentIdx(nextIdx);
     setProgress(0);
-  }, []);
+    switchTrip(HERO_SLIDES[nextIdx].id);
+  }, [switchTrip]);
 
   const nextSlide = useCallback(() => {
     goToSlide(currentIdx + 1);
@@ -146,9 +148,18 @@ export const HeroSlideshow: React.FC = () => {
     goToSlide(currentIdx - 1);
   }, [currentIdx, goToSlide]);
 
-  // Continuous auto-play cycle
+  // Sync slide index if activeTripId changes externally
   useEffect(() => {
-    if (isPaused) {
+    const foundIdx = HERO_SLIDES.findIndex((s) => s.id === activeTripId);
+    if (foundIdx !== -1 && foundIdx !== currentIdx) {
+      setCurrentIdx(foundIdx);
+      setProgress(0);
+    }
+  }, [activeTripId, currentIdx]);
+
+  // Continuous auto-play cycle (pauses when user pauses or when booking modal is open)
+  useEffect(() => {
+    if (isPaused || isBookingOpen) {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
       return;
@@ -171,7 +182,7 @@ export const HeroSlideshow: React.FC = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
-  }, [currentIdx, isPaused, nextSlide]);
+  }, [currentIdx, isPaused, isBookingOpen, nextSlide]);
 
   const currentSlide = HERO_SLIDES[currentIdx];
 
@@ -274,7 +285,10 @@ export const HeroSlideshow: React.FC = () => {
                 <button
                   type="button"
                   className="hero-continue shadow-lg"
-                  onClick={() => setIsBookingOpen(true)}
+                  onClick={() => {
+                    switchTrip(currentSlide.id);
+                    setIsBookingOpen(true);
+                  }}
                 >
                   Continue to reserve <ArrowUpRight size={16} />
                 </button>
