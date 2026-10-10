@@ -11,7 +11,7 @@ export interface ActivityItem {
   id: string;
   time: string;
   title: string;
-  category: 'sightseeing' | 'adventure' | 'beach' | 'food' | 'culture' | 'nightlife' | 'hidden_gem' | 'relax';
+  category: 'sightseeing' | 'adventure' | 'beach' | 'food' | 'culture' | 'nightlife' | 'hidden_gem' | 'relax' | 'nature';
   location: string;
   coordinates: { x: number; y: number; lat: number; lng: number };
   duration: string;
@@ -202,4 +202,55 @@ export interface PassportStamp {
   date: string;
   days: number;
   badge: string;
+}
+
+export interface BookingPhoto {
+  url: string;
+  caption: string;
+  tag?: string;
+}
+
+export interface BookingHotelOption extends HotelItem {
+  photos: BookingPhoto[];
+  badge?: string; // 'AI Recommended' | '5-Star Luxury' | 'Heritage Gem' | 'Budget Friendly' | 'Beachfront'
+  highlights: string[];
+  roomType: string;
+  originalPrice?: number;
+}
+
+export interface BookingTransportOption extends TransportItem {
+  photos: BookingPhoto[];
+  badge?: string; // 'AI Recommended' | 'Scenic Train' | 'Fastest Flight' | 'Budget Sleeper' | 'Private Chauffeur'
+  highlights: string[];
+  classType: string; // 'Executive Chair Car' | 'Economy Direct' | '1st AC Coupe' | 'Business Vista'
+  originalPrice?: number;
+}
+
+export interface BookingDiningOption {
+  id: string;
+  name: string;
+  cuisine: string;
+  location: string;
+  rating: number;
+  reviewCount: number;
+  costForTwo: number;
+  photos: BookingPhoto[];
+  badge?: string; // 'AI Recommended' | 'Iconic Sunset' | 'Michelin Guide' | 'Heritage Cuisine'
+  specialty: string;
+  highlights: string[];
+  whySelected: string;
+  originalPrice?: number;
+}
+
+export interface BookingLocalTransitOption {
+  id: string;
+  name: string;
+  type: 'ev_cab' | 'rental_scooter' | 'suv_chauffeur' | 'ferry';
+  provider: string;
+  price: number;
+  photos: BookingPhoto[];
+  badge?: string;
+  highlights: string[];
+  whySelected: string;
+  originalPrice?: number;
 }

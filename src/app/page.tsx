@@ -17,6 +17,7 @@ import { TripReplayModal } from '@/components/TripReplayModal';
 import { TravelConciergeModal } from '@/components/TravelConciergeModal';
 import { WhatIfSimulator } from '@/components/WhatIfSimulator';
 import { BudgetIntelligence } from '@/components/BudgetIntelligence';
+import { BudgetEditorModal } from '@/components/BudgetEditorModal';
 import { DockMenu, DockTab } from '@/components/DockMenu';
 import { ProfileSection } from '@/components/ProfileSection';
 import { ChatSection } from '@/components/ChatSection';
@@ -24,8 +25,8 @@ import { AboutSection } from '@/components/AboutSection';
 import { HeroSlideshow } from '@/components/HeroSlideshow';
 import {
   ArrowUpRight, CalendarDays, Check, ChevronRight, Compass, CreditCard,
-  Map, Menu, MessageCircle, MoreHorizontal, Navigation,
-  Sparkles, Wallet, X, LockKeyhole, User,
+  Map, Menu, MessageCircle, MoreHorizontal, Navigation, Star,
+  Sparkles, SunMedium, Wallet, X, LockKeyhole, User, Pencil,
 } from 'lucide-react';
 
 type WorkspaceView = 'overview' | 'itinerary' | 'map' | 'budget';
@@ -39,9 +40,10 @@ const navItems: { id: WorkspaceView; label: string; icon: React.ElementType }[] 
 
 function RoveWorkspace() {
   const {
-    trip, isTravelModeActive, setIsTravelModeActive,
+    trip, activeTripId, switchTrip, availableTrips,
+    isTravelModeActive, setIsTravelModeActive,
     setIsBookingOpen, setIsConciergeOpen, setIsDemoTourOpen,
-    toggleLockHotel, reoptimizeTrip,
+    toggleLockHotel, reoptimizeTrip, setIsBudgetEditorOpen,
   } = useRove();
 
   // Bottom dock active tab: 'home' | 'profile' | 'chat'
@@ -164,6 +166,97 @@ function RoveWorkspace() {
         {/* 1. HOME SECTION */}
         {dockTab === 'home' && (
           <div className="animate-in fade-in duration-300">
+{/*             <HeroSlideshow /> */}
+            <section className="workspace-hero">
+              {/* INTERACTIVE DESTINATION SWITCHER */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs uppercase font-sans tracking-widest text-stone-500 font-semibold">
+                    Destination Hub:
+                  </span>
+                  <span className="text-xs font-serif font-medium text-stone-900 bg-stone-200/80 px-2.5 py-0.5 rounded-full">
+                    {trip.destination}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-stone-200/80 border border-stone-300/80 backdrop-blur-md self-start sm:self-auto overflow-x-auto max-w-full shadow-xs">
+                  {availableTrips.map((dest) => {
+                    const isSelected =
+                      activeTripId === dest.id ||
+                      trip.id === dest.trip.id ||
+                      trip.destination.toLowerCase().includes(dest.id);
+                    return (
+                      <button
+                        key={dest.id}
+                        onClick={() => switchTrip(dest.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer whitespace-nowrap ${
+                          isSelected
+                            ? 'bg-stone-900 text-white shadow-sm font-semibold'
+                            : 'text-stone-700 hover:text-stone-900 hover:bg-stone-100/90'
+                        }`}
+                      >
+                        <span>{dest.icon}</span>
+                        <span>{dest.name}</span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
+                            isSelected
+                              ? 'bg-white/20 text-white'
+                              : 'bg-stone-300/70 text-stone-700'
+                          }`}
+                        >
+                          {dest.badge}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div
+                className="workspace-hero-image"
+                style={{ backgroundImage: `url(${trip.heroImage})` }}
+              >
+                <div className="workspace-hero-overlay" />
+                <div className="workspace-hero-content">
+                  <div className="eyebrow light">
+                    <span className="eyebrow-dot" /> Your trip workspace
+                  </div>
+                  <div className="hero-title-row">
+                    <div>
+                      <h1>
+                        {trip.destination.split(',')[0]}
+                        <span className="hero-title-script">, slowly discovered.</span>
+                      </h1>
+                      <p>
+                        {trip.startDate} — {trip.endDate} <span>·</span> {trip.nights} nights <span>·</span> {trip.travelers.adults} travelers
+                      </p>
+                    </div>
+                    <button
+                      className="hero-continue"
+                      onClick={() => setIsBookingOpen(true)}
+                    >
+                      Continue to reserve <ArrowUpRight size={16} />
+                    </button>
+                  </div>
+                  <div className="hero-meta-row">
+                    <span>
+                      <Navigation size={14} />{' '}
+                      {trip.destination.includes('Ladakh')
+                        ? 'Leh & Nubra Pass Corridor'
+                        : trip.destination.includes('Bali')
+                        ? 'Ubud & Uluwatu Cliffs'
+                        : 'North & Central Coast'}
+                    </span>
+                    <span>
+                      <SunMedium size={14} /> {trip.weather.temp} · {trip.weather.condition}
+                    </span>
+                    <span>
+                      <Star size={14} fill="currentColor" /> {trip.score.overall}/100 trip score
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
             <HeroSlideshow />
 
             <section className="workspace-shell">
@@ -183,9 +276,9 @@ function RoveWorkspace() {
                     {view === 'overview'
                       ? 'A good trip leaves room for the unexpected.'
                       : view === 'itinerary'
-                      ? 'Your Goa days'
+                      ? `Your ${trip.destination.split(',')[0]} days`
                       : view === 'map'
-                      ? 'The quiet route through Goa'
+                      ? `The quiet route through ${trip.destination.split(',')[0]}`
                       : 'A plan that respects your limit.'}
                   </h2>
                 </div>
@@ -286,11 +379,19 @@ function RoveWorkspace() {
                       <div className="decision-list">
                         <div>
                           <span>01</span>
-                          <p><strong>North Goa first.</strong> Your first two days stay close to the coast, saving 32 km of backtracking.</p>
+                          <p>
+                            {trip.destination.includes('Ladakh') ? (
+                              <><strong>Acclimatization first.</strong> Day 1 is dedicated to gentle rest in Leh before ascending Khardung La.</>
+                            ) : trip.destination.includes('Bali') ? (
+                              <><strong>Split-hub stay.</strong> Ubud jungle highlands first, then Uluwatu cliffs to avoid island traffic.</>
+                            ) : (
+                              <><strong>North Goa first.</strong> Your first two days stay close to the coast, saving 32 km of backtracking.</>
+                            )}
+                          </p>
                         </div>
                         <div>
                           <span>02</span>
-                          <p><strong>One protected stay.</strong> Casa De Vagator is locked, so optimization never touches your anchor.</p>
+                          <p><strong>One protected stay.</strong> {trip.hotel.name} is locked, so optimization never touches your anchor.</p>
                         </div>
                         <div>
                           <span>03</span>
@@ -307,18 +408,35 @@ function RoveWorkspace() {
                           <div className="card-kicker">Trip budget</div>
                           <h3>{formattedBudget} <span>/ ₹{trip.budget.totalBudget.toLocaleString('en-IN')}</span></h3>
                         </div>
-                        <Wallet size={18} className="muted-icon" />
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setIsBudgetEditorOpen(true)}
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-700 bg-stone-100 hover:bg-stone-900 hover:text-white px-2.5 py-1 rounded-full transition cursor-pointer"
+                            title="Edit budget cap and allocations"
+                          >
+                            <Pencil size={11} /> Edit
+                          </button>
+                          <Wallet size={18} className="muted-icon" />
+                        </div>
                       </div>
                       <div className="budget-meter">
-                        <span style={{ width: `${Math.min(100, (trip.budget.plannedCost / trip.budget.totalBudget) * 100)}%` }} />
+                        <span style={{ width: `${Math.min(100, (trip.budget.plannedCost / (trip.budget.totalBudget || 1)) * 100)}%` }} />
                       </div>
                       <div className="budget-foot">
-                        <span>{Math.round((trip.budget.plannedCost / trip.budget.totalBudget) * 100)}% committed</span>
+                        <span>{Math.round((trip.budget.plannedCost / (trip.budget.totalBudget || 1)) * 100)}% committed</span>
                         <strong>₹{trip.budget.remaining.toLocaleString('en-IN')} left</strong>
                       </div>
-                      <button className="text-link" onClick={() => goToView('budget')}>
-                        Open budget <ArrowUpRight size={14} />
-                      </button>
+                      <div className="flex items-center justify-between mt-5 pt-3 border-t border-stone-200/60">
+                        <button className="text-link !mt-0" onClick={() => goToView('budget')}>
+                          Open budget <ArrowUpRight size={14} />
+                        </button>
+                        <button
+                          onClick={() => setIsBudgetEditorOpen(true)}
+                          className="text-[11px] font-semibold text-stone-700 hover:text-stone-950 flex items-center gap-1 underline underline-offset-2 cursor-pointer"
+                        >
+                          <Pencil size={11} /> Edit numbers
+                        </button>
+                      </div>
                     </div>
 
                     <div className="overview-card score-card">
@@ -412,6 +530,7 @@ function RoveWorkspace() {
       <GuidedDemoTour />
       <TripReplayModal />
       <TravelConciergeModal />
+      <BudgetEditorModal />
     </div>
   );
 }

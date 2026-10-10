@@ -6,7 +6,7 @@ import { ArrowRight } from 'lucide-react';
 import { useRove } from '@/context/RoveContext';
 
 export const PopularDestinations: React.FC = () => {
-  const { resetTripToDefault } = useRove();
+  const { switchTrip } = useRove();
 
   return (
     <section id="explore-section" className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12 py-16 border-t border-stone-200/80">
@@ -24,7 +24,7 @@ export const PopularDestinations: React.FC = () => {
         </div>
 
         <span className="text-xs font-sans text-stone-500">
-          5 Verified Hubs Active
+          3 Interactive Hubs Active (Goa, Ladakh, Bali)
         </span>
       </div>
 
@@ -77,15 +77,16 @@ export const PopularDestinations: React.FC = () => {
             <div className="p-5 pt-0">
               <button
                 onClick={() => {
-                  if (dest.id === 'goa') {
-                    resetTripToDefault();
+                  if (dest.id === 'ladakh') {
+                    switchTrip('ladakh');
+                  } else if (dest.id === 'bali') {
+                    switchTrip('bali');
                   } else {
-                    alert(`Loaded ${dest.name} journey constraints into Rove!`);
+                    switchTrip('goa');
                   }
-                  const el = document.getElementById('itinerary-section');
-                  el?.scrollIntoView({ behavior: 'smooth' });
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="w-full flex items-center justify-center gap-1.5 rounded-full border border-stone-300 bg-white py-2.5 text-xs font-semibold text-stone-800 group-hover:bg-stone-900 group-hover:text-white group-hover:border-stone-900 transition active:scale-98"
+                className="w-full flex items-center justify-center gap-1.5 rounded-full border border-stone-300 bg-white py-2.5 text-xs font-semibold text-stone-800 group-hover:bg-stone-900 group-hover:text-white group-hover:border-stone-900 transition active:scale-98 cursor-pointer"
               >
                 <span>Explore Journey</span>
                 <ArrowRight className="h-3.5 w-3.5" />

@@ -8,17 +8,45 @@ import {
   PassportBadge,
   PassportStamp,
   NegotiationTradeoff,
+  BookingHotelOption,
+  BookingTransportOption,
+  BookingDiningOption,
+  BookingLocalTransitOption,
 } from '@/types/rove';
 import {
   initialGoaTrip,
+  initialLadakhTrip,
+  initialBaliTrip,
+  availableTrips,
   sampleNegotiationTradeoffs,
   initialBadges,
   initialStamps,
+  destinationBookingCatalog,
+  DestinationCatalog,
 } from '@/data/mockData';
 
 interface RoveContextType {
   trip: Trip;
   setTrip: React.Dispatch<React.SetStateAction<Trip>>;
+  // Trip Destination selection
+  activeTripId: string;
+  switchTrip: (tripId: string) => void;
+  availableTrips: typeof availableTrips;
+  // Booking Options & Customization Hub
+  bookingCatalog: DestinationCatalog;
+  selectedHotelOption: BookingHotelOption;
+  selectedTransportOption: BookingTransportOption;
+  selectedDiningOption: BookingDiningOption;
+  selectedTransitOption: BookingLocalTransitOption;
+  selectHotelOption: (hotel: BookingHotelOption) => void;
+  selectTransportOption: (transport: BookingTransportOption) => void;
+  selectDiningOption: (dining: BookingDiningOption) => void;
+  selectLocalTransitOption: (transit: BookingLocalTransitOption) => void;
+  updateCustomPrice: (category: 'hotel' | 'transport' | 'dining' | 'transit', newPrice: number) => void;
+  // Budget Editor
+  isBudgetEditorOpen: boolean;
+  setIsBudgetEditorOpen: (open: boolean) => void;
+  updateTripBudget: (updated: Partial<Trip['budget']>) => void;
   // Lock system
   isHotelLocked: boolean;
   isTransportLocked: boolean;
@@ -75,11 +103,20 @@ interface RoveContextType {
 const RoveContext = createContext<RoveContextType | undefined>(undefined);
 
 export const RoveProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [activeTripId, setActiveTripId] = useState<string>('goa');
   const [trip, setTrip] = useState<Trip>(initialGoaTrip);
   const [isAiThinking, setIsAiThinking] = useState<boolean>(false);
   const [activeSimulation, setActiveSimulation] = useState<'none' | 'rain' | 'cheaper2k' | 'train' | 'budgetUp5k'>('none');
 
+  // Booking catalog and selected options
+  const bookingCatalog = destinationBookingCatalog[activeTripId] || destinationBookingCatalog.goa;
+  const [selectedHotelOption, setSelectedHotelOption] = useState<BookingHotelOption>(bookingCatalog.hotels[0]);
+  const [selectedTransportOption, setSelectedTransportOption] = useState<BookingTransportOption>(bookingCatalog.transports[0]);
+  const [selectedDiningOption, setSelectedDiningOption] = useState<BookingDiningOption>(bookingCatalog.dining[0]);
+  const [selectedTransitOption, setSelectedTransitOption] = useState<BookingLocalTransitOption>(bookingCatalog.localTransit[0]);
+
   // Modal Visibility
+  const [isBudgetEditorOpen, setIsBudgetEditorOpen] = useState(false);
   const [isNegotiationOpen, setIsNegotiationOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isWalletOpen, setIsWalletOpen] = useState(false);
@@ -290,8 +327,210 @@ export const RoveProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 1200);
   };
 
+  const selectHotelOption = (hotel: BookingHotelOption) => {
+    setSelectedHotelOption(hotel);
+    setTrip((prev) => {
+      const oldHotelCost = prev.hotel.totalCost;
+      const newHotelCost = hotel.totalCost;
+      const costDelta = newHotelCost - oldHotelCost;
+      const updatedPlanned = prev.budget.plannedCost + costDelta;
+      const updatedRemaining = prev.budget.totalBudget - updatedPlanned;
+
+      return {
+        ...prev,
+        hotel: {
+          ...hotel,
+          locked: prev.locked.hotel ?? false,
+        },
+        budget: {
+          ...prev.budget,
+          hotelCost: newHotelCost,
+          plannedCost: updatedPlanned,
+          remaining: updatedRemaining,
+        },
+      };
+    });
+    earnCredits(50, `Selected Stays: ${hotel.name}`);
+  };
+
+  const selectTransportOption = (transport: BookingTransportOption) => {
+    setSelectedTransportOption(transport);
+    setTrip((prev) => {
+      const oldTransportCost = prev.transport.cost;
+      const newTransportCost = transport.cost;
+      const costDelta = newTransportCost - oldTransportCost;
+      const updatedPlanned = prev.budget.plannedCost + costDelta;
+      const updatedRemaining = prev.budget.totalBudget - updatedPlanned;
+
+      return {
+        ...prev,
+        transport: {
+          ...transport,
+          locked: prev.locked.transport ?? false,
+        },
+        budget: {
+          ...prev.budget,
+          transportCost: newTransportCost,
+          plannedCost: updatedPlanned,
+          remaining: updatedRemaining,
+        },
+      };
+    });
+    earnCredits(50, `Selected Journey: ${transport.provider} (${transport.classType})`);
+  };
+
+  const selectDiningOption = (dining: BookingDiningOption) => {
+    setSelectedDiningOption(dining);
+    earnCredits(30, `Selected Curated Dining: ${dining.name}`);
+  };
+
+  const selectLocalTransitOption = (transit: BookingLocalTransitOption) => {
+    setSelectedTransitOption(transit);
+    setTrip((prev) => {
+      const oldCost = prev.budget.localTransitCost;
+      const newCost = transit.price;
+      const delta = newCost - oldCost;
+      const updatedPlanned = prev.budget.plannedCost + delta;
+      return {
+        ...prev,
+        budget: {
+          ...prev.budget,
+          localTransitCost: newCost,
+          plannedCost: updatedPlanned,
+          remaining: prev.budget.totalBudget - updatedPlanned,
+        },
+      };
+    });
+    earnCredits(30, `Selected Local Transit: ${transit.name}`);
+  };
+
+  const updateCustomPrice = (category: 'hotel' | 'transport' | 'dining' | 'transit', newPrice: number) => {
+    if (isNaN(newPrice) || newPrice < 0) return;
+    setTrip((prev) => {
+      let delta = 0;
+      const updatedBudget = { ...prev.budget };
+      const updatedHotel = { ...prev.hotel };
+      const updatedTransport = { ...prev.transport };
+
+      if (category === 'hotel') {
+        delta = newPrice - prev.hotel.totalCost;
+        updatedHotel.totalCost = newPrice;
+        updatedHotel.pricePerNight = Math.round(newPrice / Math.max(1, prev.hotel.nights));
+        updatedBudget.hotelCost = newPrice;
+        setSelectedHotelOption((h) => ({ ...h, totalCost: newPrice, pricePerNight: updatedHotel.pricePerNight }));
+      } else if (category === 'transport') {
+        delta = newPrice - prev.transport.cost;
+        updatedTransport.cost = newPrice;
+        updatedBudget.transportCost = newPrice;
+        setSelectedTransportOption((t) => ({ ...t, cost: newPrice }));
+      } else if (category === 'dining') {
+        delta = newPrice - prev.budget.foodCost;
+        updatedBudget.foodCost = newPrice;
+        setSelectedDiningOption((d) => ({ ...d, costForTwo: newPrice }));
+      } else if (category === 'transit') {
+        delta = newPrice - prev.budget.localTransitCost;
+        updatedBudget.localTransitCost = newPrice;
+        setSelectedTransitOption((tr) => ({ ...tr, price: newPrice }));
+      }
+
+      const newPlanned = prev.budget.plannedCost + delta;
+      const newRemaining = prev.budget.totalBudget - newPlanned;
+
+      return {
+        ...prev,
+        hotel: updatedHotel,
+        transport: updatedTransport,
+        budget: {
+          ...updatedBudget,
+          plannedCost: newPlanned,
+          remaining: newRemaining,
+        },
+      };
+    });
+    earnCredits(40, `Custom Price Adjusted (${category})`);
+  };
+
+  const switchTrip = (tripId: string) => {
+    setActiveTripId(tripId);
+    setActiveSimulation('none');
+    let selectedTrip: Trip = initialGoaTrip;
+    let welcomeText = '';
+    if (tripId === 'ladakh') {
+      selectedTrip = initialLadakhTrip;
+      welcomeText = '🏔️ Welcome to Ladakh! I analyzed your high-altitude requirements: 5 Nights, 2 Guests, ₹42,000 budget cap. The route features Leh acclimatization, Khardung La (5,359m), Nubra Valley dunes, and Pangong Tso with ₹2,200 safety buffer.';
+    } else if (tripId === 'bali') {
+      selectedTrip = initialBaliTrip;
+      welcomeText = '🌺 Welcome to Bali, Indonesia! I calibrated your international island journey: 5 Nights, 2 Guests, ₹68,000 budget. Split-stay across Ubud jungle villas and Uluwatu ocean cliffs eliminates 4 hours of road congestion.';
+    } else {
+      selectedTrip = initialGoaTrip;
+      welcomeText = '🌴 Switched back to Goa Coastal Odyssey: 3 Nights, 2 Guests, ₹15,000 budget. Route-clustered itinerary with Casa De Vagator stay.';
+    }
+    setTrip(selectedTrip);
+
+    // Sync booking options for destination
+    const newCatalog = destinationBookingCatalog[tripId] || destinationBookingCatalog.goa;
+    if (newCatalog.hotels[0]) setSelectedHotelOption(newCatalog.hotels[0]);
+    if (newCatalog.transports[0]) setSelectedTransportOption(newCatalog.transports[0]);
+    if (newCatalog.dining[0]) setSelectedDiningOption(newCatalog.dining[0]);
+    if (newCatalog.localTransit[0]) setSelectedTransitOption(newCatalog.localTransit[0]);
+
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: `msg-switch-${Date.now()}`,
+        sender: 'rove-ai',
+        text: welcomeText,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        diffSummary: `Destination switched to ${selectedTrip.destination} | Route & budget calibrated`,
+      },
+    ]);
+  };
+
+  const updateTripBudget = (updated: Partial<Trip['budget']>) => {
+    setTrip((prev) => {
+      const merged = { ...prev.budget, ...updated };
+      const calculatedPlanned =
+        updated.plannedCost !== undefined
+          ? updated.plannedCost
+          : merged.hotelCost +
+            merged.transportCost +
+            merged.foodCost +
+            merged.activitiesCost +
+            merged.localTransitCost +
+            merged.bufferCost;
+
+      const remaining = merged.totalBudget - calculatedPlanned;
+      const budgetRatio = calculatedPlanned / (merged.totalBudget || 1);
+      const budgetEfficiency =
+        budgetRatio <= 1
+          ? Math.min(100, Math.round(100 - (1 - budgetRatio) * 10))
+          : Math.max(50, Math.round(100 - (budgetRatio - 1) * 80));
+
+      return {
+        ...prev,
+        budget: {
+          ...merged,
+          plannedCost: calculatedPlanned,
+          remaining,
+        },
+        score: {
+          ...prev.score,
+          budgetEfficiency,
+        },
+      };
+    });
+
+    earnCredits(75, 'Tailored Trip Financials Saved');
+  };
+
   const resetTripToDefault = () => {
-    setTrip(initialGoaTrip);
+    if (activeTripId === 'ladakh') {
+      setTrip(initialLadakhTrip);
+    } else if (activeTripId === 'bali') {
+      setTrip(initialBaliTrip);
+    } else {
+      setTrip(initialGoaTrip);
+    }
     setActiveSimulation('none');
   };
 
@@ -514,6 +753,22 @@ export const RoveProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         trip,
         setTrip,
+        activeTripId,
+        switchTrip,
+        availableTrips,
+        bookingCatalog,
+        selectedHotelOption,
+        selectedTransportOption,
+        selectedDiningOption,
+        selectedTransitOption,
+        selectHotelOption,
+        selectTransportOption,
+        selectDiningOption,
+        selectLocalTransitOption,
+        updateCustomPrice,
+        isBudgetEditorOpen,
+        setIsBudgetEditorOpen,
+        updateTripBudget,
         isHotelLocked,
         isTransportLocked,
         toggleLockHotel,
