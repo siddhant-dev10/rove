@@ -58,7 +58,11 @@ export const DockMenu: React.FC<DockMenuProps> = ({
               }`}
             >
               {id === 'home' ? (
-                <img src="rove-logo.jpg" alt="" className="rove-logo-image h-4 w-4 rounded-full object-cover" />
+                <img
+                  src={isActive ? "rove-logo.png" : "rove-logo-dark-mode.png"}
+                  alt="Home"
+                  className="h-4 w-4 object-contain"
+                />
               ) : (
                 <Icon
                   className={`w-4 h-4 transition-transform ${

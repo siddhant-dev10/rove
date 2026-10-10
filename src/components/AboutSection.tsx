@@ -81,10 +81,9 @@ export const AboutSection: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12 pb-14 border-b border-stone-200/70">
             {/* Brand identity column */}
             <div className="lg:col-span-4 space-y-4">
-              <div className="flex items-center gap-2.5">
-                <img src="rove-logo.jpg" alt="Rove" className="rove-logo-image h-8 w-8 rounded-full object-cover" />
-                <span className="font-serif text-xl font-medium tracking-tight text-stone-900">ROVE</span>
-                <span className="text-[10px] uppercase tracking-widest text-stone-400 font-semibold border-l border-stone-300 pl-2">
+              <div className="flex items-center gap-3">
+                <img src="rove-logo-header.png" alt="Rove — Move Less, Feel More" className="h-8 w-auto object-contain" />
+                <span className="text-[10px] uppercase tracking-widest text-stone-400 font-semibold border-l border-stone-300 pl-2.5">
                   TRAVEL OS
                 </span>
               </div>
