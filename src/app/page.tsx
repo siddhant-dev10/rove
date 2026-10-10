@@ -25,8 +25,8 @@ import { AboutSection } from '@/components/AboutSection';
 import { HeroSlideshow } from '@/components/HeroSlideshow';
 import {
   ArrowUpRight, CalendarDays, Check, ChevronRight, Compass, CreditCard,
-  Map, Menu, MessageCircle, MoreHorizontal, Navigation, Star,
-  Sparkles, SunMedium, Wallet, X, LockKeyhole, User, Pencil,
+  Map, Menu, MessageCircle, MoreHorizontal, Navigation,
+  Sparkles, Wallet, X, LockKeyhole, User, Pencil,
 } from 'lucide-react';
 
 type WorkspaceView = 'overview' | 'itinerary' | 'map' | 'budget';
@@ -40,7 +40,7 @@ const navItems: { id: WorkspaceView; label: string; icon: React.ElementType }[] 
 
 function RoveWorkspace() {
   const {
-    trip, activeTripId, switchTrip, availableTrips,
+    trip,
     isTravelModeActive, setIsTravelModeActive,
     setIsBookingOpen, setIsConciergeOpen, setIsDemoTourOpen,
     toggleLockHotel, reoptimizeTrip, setIsBudgetEditorOpen,
@@ -166,97 +166,6 @@ function RoveWorkspace() {
         {/* 1. HOME SECTION */}
         {dockTab === 'home' && (
           <div className="animate-in fade-in duration-300">
-{/*             <HeroSlideshow /> */}
-            <section className="workspace-hero">
-              {/* INTERACTIVE DESTINATION SWITCHER */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs uppercase font-sans tracking-widest text-stone-500 font-semibold">
-                    Destination Hub:
-                  </span>
-                  <span className="text-xs font-serif font-medium text-stone-900 bg-stone-200/80 px-2.5 py-0.5 rounded-full">
-                    {trip.destination}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-stone-200/80 border border-stone-300/80 backdrop-blur-md self-start sm:self-auto overflow-x-auto max-w-full shadow-xs">
-                  {availableTrips.map((dest) => {
-                    const isSelected =
-                      activeTripId === dest.id ||
-                      trip.id === dest.trip.id ||
-                      trip.destination.toLowerCase().includes(dest.id);
-                    return (
-                      <button
-                        key={dest.id}
-                        onClick={() => switchTrip(dest.id)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer whitespace-nowrap ${
-                          isSelected
-                            ? 'bg-stone-900 text-white shadow-sm font-semibold'
-                            : 'text-stone-700 hover:text-stone-900 hover:bg-stone-100/90'
-                        }`}
-                      >
-                        <span>{dest.icon}</span>
-                        <span>{dest.name}</span>
-                        <span
-                          className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
-                            isSelected
-                              ? 'bg-white/20 text-white'
-                              : 'bg-stone-300/70 text-stone-700'
-                          }`}
-                        >
-                          {dest.badge}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div
-                className="workspace-hero-image"
-                style={{ backgroundImage: `url(${trip.heroImage})` }}
-              >
-                <div className="workspace-hero-overlay" />
-                <div className="workspace-hero-content">
-                  <div className="eyebrow light">
-                    <span className="eyebrow-dot" /> Your trip workspace
-                  </div>
-                  <div className="hero-title-row">
-                    <div>
-                      <h1>
-                        {trip.destination.split(',')[0]}
-                        <span className="hero-title-script">, slowly discovered.</span>
-                      </h1>
-                      <p>
-                        {trip.startDate} — {trip.endDate} <span>·</span> {trip.nights} nights <span>·</span> {trip.travelers.adults} travelers
-                      </p>
-                    </div>
-                    <button
-                      className="hero-continue"
-                      onClick={() => setIsBookingOpen(true)}
-                    >
-                      Continue to reserve <ArrowUpRight size={16} />
-                    </button>
-                  </div>
-                  <div className="hero-meta-row">
-                    <span>
-                      <Navigation size={14} />{' '}
-                      {trip.destination.includes('Ladakh')
-                        ? 'Leh & Nubra Pass Corridor'
-                        : trip.destination.includes('Bali')
-                        ? 'Ubud & Uluwatu Cliffs'
-                        : 'North & Central Coast'}
-                    </span>
-                    <span>
-                      <SunMedium size={14} /> {trip.weather.temp} · {trip.weather.condition}
-                    </span>
-                    <span>
-                      <Star size={14} fill="currentColor" /> {trip.score.overall}/100 trip score
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
             <HeroSlideshow />
 
             <section className="workspace-shell">
