@@ -71,7 +71,7 @@ function RoveWorkspace() {
             onClick={() => handleDockTabChange('home')}
             aria-label="Rove home"
           >
-            <img className="brand-logo rove-logo-image" src="rove-logo.jpg" alt="Rove" />
+            <img className="brand-logo rove-logo-image" src="rove-logo-header.png" alt="Rove — Move Less, Feel More" />
           </button>
 
           <div className="header-actions">

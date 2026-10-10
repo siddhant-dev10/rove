@@ -18,6 +18,13 @@ const serif = Newsreader({
 export const metadata: Metadata = {
   title: "Rove — Travel thoughtfully planned by AI",
   description: "Experience effortless travel planning. Rove balances budgets, selects boutique stays, optimizes routes, and adapts to your journey with human care and precision.",
+  icons: {
+    icon: [
+      { url: "favicon.ico" },
+      { url: "rove-logo.png", type: "image/png" },
+    ],
+    apple: "rove-app-icon.png",
+  },
 };
 
 export default function RootLayout({
