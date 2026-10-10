@@ -21,10 +21,11 @@ import { DockMenu, DockTab } from '@/components/DockMenu';
 import { ProfileSection } from '@/components/ProfileSection';
 import { ChatSection } from '@/components/ChatSection';
 import { AboutSection } from '@/components/AboutSection';
+import { HeroSlideshow } from '@/components/HeroSlideshow';
 import {
   ArrowUpRight, CalendarDays, Check, ChevronRight, Compass, CreditCard,
-  Map, Menu, MessageCircle, MoreHorizontal, Navigation, Star,
-  Sparkles, SunMedium, Wallet, X, LockKeyhole, User,
+  Map, Menu, MessageCircle, MoreHorizontal, Navigation,
+  Sparkles, Wallet, X, LockKeyhole, User,
 } from 'lucide-react';
 
 type WorkspaceView = 'overview' | 'itinerary' | 'map' | 'budget';
@@ -163,41 +164,7 @@ function RoveWorkspace() {
         {/* 1. HOME SECTION */}
         {dockTab === 'home' && (
           <div className="animate-in fade-in duration-300">
-            <section className="workspace-hero">
-              <div
-                className="workspace-hero-image"
-                style={{ backgroundImage: `url(${trip.heroImage})` }}
-              >
-                <div className="workspace-hero-overlay" />
-                <div className="workspace-hero-content">
-                  <div className="eyebrow light">
-                    <span className="eyebrow-dot" /> Your trip workspace
-                  </div>
-                  <div className="hero-title-row">
-                    <div>
-                      <h1>
-                        {trip.destination.replace(', India', '')}
-                        <span className="hero-title-script">, slowly discovered.</span>
-                      </h1>
-                      <p>
-                        {trip.startDate} — {trip.endDate} <span>·</span> {trip.nights} nights <span>·</span> {trip.travelers.adults} travelers
-                      </p>
-                    </div>
-                    <button
-                      className="hero-continue"
-                      onClick={() => setIsBookingOpen(true)}
-                    >
-                      Continue to reserve <ArrowUpRight size={16} />
-                    </button>
-                  </div>
-                  <div className="hero-meta-row">
-                    <span><Navigation size={14} /> North & Central Coast</span>
-                    <span><SunMedium size={14} /> 29°C · Coastal skies</span>
-                    <span><Star size={14} fill="currentColor" /> {trip.score.overall}/100 trip score</span>
-                  </div>
-                </div>
-              </div>
-            </section>
+            <HeroSlideshow />
 
             <section className="workspace-shell">
               <div className="workspace-topline">
