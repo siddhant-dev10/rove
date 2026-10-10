@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { RoveProvider, useRove } from '@/context/RoveContext';
+import { useAuth } from '@/context/AuthContext';
 import { BookingSummaryModal } from '@/components/BookingSummaryModal';
 import { CrowdIntelligence } from '@/components/CrowdIntelligence';
 import { GuidedDemoTour } from '@/components/GuidedDemoTour';
@@ -46,6 +47,7 @@ function RoveWorkspace() {
     setIsBookingOpen, setIsConciergeOpen, setIsDemoTourOpen,
     toggleLockHotel, reoptimizeTrip, setIsBudgetEditorOpen,
   } = useRove();
+  const { user, isAuthenticated } = useAuth();
 
   // Bottom dock active tab: 'home' | 'profile' | 'chat'
   const [dockTab, setDockTab] = useState<DockTab>('home');
@@ -79,8 +81,21 @@ function RoveWorkspace() {
           </button>
 
           <div className="header-actions">
-            <Link href="/auth" className="header-icon-button hide-mobile" title="Log in or sign up" aria-label="Log in or sign up">
-              <User size={17} />
+            <Link
+              href="/auth"
+              className={`header-icon-button hide-mobile flex items-center justify-center transition ${
+                isAuthenticated ? 'bg-stone-900 text-white hover:bg-stone-800' : ''
+              }`}
+              title={isAuthenticated && user ? `Signed in as ${user.name} (${user.email})` : 'Log in or sign up'}
+              aria-label={isAuthenticated && user ? `Signed in as ${user.name}` : 'Log in or sign up'}
+            >
+              {isAuthenticated && user ? (
+                <span className="text-[11px] font-serif font-bold tracking-tight">
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+              ) : (
+                <User size={17} />
+              )}
             </Link>
 
             <button
@@ -128,7 +143,7 @@ function RoveWorkspace() {
               <MessageCircle size={16} /> AI Chat Assistant
             </button>
             <Link href="/auth" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>
-              <User size={16} /> Log in / Sign up
+              <User size={16} /> {isAuthenticated && user ? `Account: ${user.name}` : 'Log in / Sign up'}
             </Link>
             <button
               className="mobile-nav-link"

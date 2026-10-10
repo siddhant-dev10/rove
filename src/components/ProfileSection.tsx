@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRove } from '@/context/RoveContext';
+import { useAuth } from '@/context/AuthContext';
 import {
   Wallet,
   BookOpen,
@@ -17,11 +19,12 @@ import {
   Plus,
   Compass,
   Check,
-  Database,
-  RefreshCw,
+  LogOut,
+  LogIn,
 } from 'lucide-react';
 
 export const ProfileSection: React.FC = () => {
+  const { user, isAuthenticated, logout } = useAuth();
   const {
     trip,
     creditsBalance,
@@ -33,33 +36,20 @@ export const ProfileSection: React.FC = () => {
     setIsBookingOpen,
     badges,
     stamps,
-    earnCredits,
   } = useRove();
 
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const travelerName = isAuthenticated && user ? user.name : 'Guest Traveler';
+  const travelerEmail = isAuthenticated && user ? user.email : 'Sign in to save your itineraries';
+  const initials = isAuthenticated && user && user.name
+    ? user.name.split(' ').map((n) => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
+    : 'GT';
+  const travelerTag = isAuthenticated && user
+    ? `Verified Nomad #${user.id.slice(-4).toUpperCase()}`
+    : 'Guest Explorer';
 
-  const handleSyncToMongoDB = async () => {
-    setIsSyncing(true);
-    try {
-      const res = await fetch('/api/trips', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(trip),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSyncStatus(`Saved "${trip.title}" to MongoDB Atlas!`);
-        earnCredits(50, 'Synced Itinerary to MongoDB Atlas');
-      } else {
-        setSyncStatus('Sync error: ' + data.error);
-      }
-    } catch {
-      setSyncStatus('Failed to connect to /api/trips');
-    } finally {
-      setIsSyncing(false);
-      setTimeout(() => setSyncStatus(null), 4000);
-    }
+  const handleSignOut = async () => {
+    await logout();
+    window.location.href = '/';
   };
 
   // Local checklist interactive state inside Profile
@@ -104,9 +94,9 @@ export const ProfileSection: React.FC = () => {
             <div className="flex items-center gap-5">
               <div className="relative">
                 <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-stone-900 text-white flex items-center justify-center font-serif text-2xl font-semibold shadow-md">
-                  SS
+                  {initials}
                 </div>
-                <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white ring-2 ring-white">
+                <span className={`absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full text-white ring-2 ring-white ${isAuthenticated ? 'bg-emerald-500' : 'bg-stone-400'}`}>
                   <Check className="w-3.5 h-3.5 stroke-[3]" />
                 </span>
               </div>
@@ -114,10 +104,10 @@ export const ProfileSection: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <h1 className="font-serif text-2xl sm:text-3xl text-stone-900 font-medium">
-                    Siddhant Shrivastava
+                    {travelerName}
                   </h1>
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-stone-100 text-stone-700 border border-stone-200">
-                    Verified Nomad #ROV-8821
+                    {travelerTag}
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-stone-500 mt-1">
@@ -125,26 +115,44 @@ export const ProfileSection: React.FC = () => {
                   <span className="font-semibold text-stone-800">
                     {trip.dna.archetype}
                   </span>{' '}
-                  · Tier 4 Slow Voyager
+                  · Tier 4 Slow Voyager · <span className="text-stone-400 font-mono text-[11px]">{travelerEmail}</span>
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <button
                 onClick={() => setIsWalletOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-stone-200 bg-stone-50 hover:bg-stone-100 text-xs font-medium text-stone-800 transition"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-stone-200 bg-stone-50 hover:bg-stone-100 text-xs font-medium text-stone-800 transition cursor-pointer"
               >
                 <Gem className="w-3.5 h-3.5 text-amber-700" />
                 <span>{creditsBalance.toLocaleString('en-IN')} RC</span>
               </button>
               <button
                 onClick={() => setIsBookingOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-stone-900 hover:bg-stone-800 text-xs font-semibold text-white shadow-xs transition"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-stone-900 hover:bg-stone-800 text-xs font-semibold text-white shadow-xs transition cursor-pointer"
               >
                 <span>Current Trip</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={handleSignOut}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-stone-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-xs font-semibold text-stone-600 transition cursor-pointer"
+                  title="Sign out of current account"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out</span>
+                </button>
+              ) : (
+                <Link
+                  href="/auth"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-800 hover:bg-amber-900 text-xs font-semibold text-white shadow-xs transition"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </Link>
+              )}
             </div>
           </div>
 
@@ -181,43 +189,6 @@ export const ProfileSection: React.FC = () => {
               <span className="font-serif text-xl sm:text-2xl font-medium text-emerald-700 mt-1 block">
                 ₹3,400 Saved
               </span>
-            </div>
-          </div>
-
-          {/* MongoDB Atlas Cloud Database Integration Card */}
-          <div className="mt-5 rounded-2xl border border-stone-200 bg-stone-50/80 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
-                <Database className="h-5 w-5" />
-              </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-semibold text-stone-900">MongoDB Atlas Database</h4>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                    Connected
-                  </span>
-                </div>
-                <p className="text-xs text-stone-500 mt-0.5">
-                  Cluster0 · Database: <code className="font-mono text-stone-700 bg-white px-1 py-0.2 rounded border border-stone-200">rove_db</code> · Collections: <span className="font-mono">trips, bookings</span>
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5 self-end sm:self-center">
-              {syncStatus && (
-                <span className="text-xs text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 animate-fade-in">
-                  {syncStatus}
-                </span>
-              )}
-              <button
-                onClick={handleSyncToMongoDB}
-                disabled={isSyncing}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-stone-900 hover:bg-stone-800 disabled:opacity-60 text-white text-xs font-semibold shadow-xs transition cursor-pointer active:scale-95"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                <span>{isSyncing ? 'Saving...' : 'Sync Active Trip to MongoDB'}</span>
-              </button>
             </div>
           </div>
         </section>

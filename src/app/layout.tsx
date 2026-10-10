@@ -24,6 +24,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { AuthProvider } from "@/context/AuthContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,7 +36,7 @@ export default function RootLayout({
       <body
         className={`${sans.variable} ${serif.variable} font-sans antialiased bg-[#FAF9F5] text-[#1C1917] selection:bg-[#E8DCCF] selection:text-[#1C1917]`}
       >
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
