@@ -17,6 +17,8 @@ import {
   Plus,
   Compass,
   Check,
+  Database,
+  RefreshCw,
 } from 'lucide-react';
 
 export const ProfileSection: React.FC = () => {
@@ -31,7 +33,34 @@ export const ProfileSection: React.FC = () => {
     setIsBookingOpen,
     badges,
     stamps,
+    earnCredits,
   } = useRove();
+
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+
+  const handleSyncToMongoDB = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/trips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(trip),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSyncStatus(`Saved "${trip.title}" to MongoDB Atlas!`);
+        earnCredits(50, 'Synced Itinerary to MongoDB Atlas');
+      } else {
+        setSyncStatus('Sync error: ' + data.error);
+      }
+    } catch {
+      setSyncStatus('Failed to connect to /api/trips');
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setSyncStatus(null), 4000);
+    }
+  };
 
   // Local checklist interactive state inside Profile
   const [packingItems, setPackingItems] = useState([
@@ -152,6 +181,43 @@ export const ProfileSection: React.FC = () => {
               <span className="font-serif text-xl sm:text-2xl font-medium text-emerald-700 mt-1 block">
                 ₹3,400 Saved
               </span>
+            </div>
+          </div>
+
+          {/* MongoDB Atlas Cloud Database Integration Card */}
+          <div className="mt-5 rounded-2xl border border-stone-200 bg-stone-50/80 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
+                <Database className="h-5 w-5" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-sm font-semibold text-stone-900">MongoDB Atlas Database</h4>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                    Connected
+                  </span>
+                </div>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Cluster0 · Database: <code className="font-mono text-stone-700 bg-white px-1 py-0.2 rounded border border-stone-200">rove_db</code> · Collections: <span className="font-mono">trips, bookings</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 self-end sm:self-center">
+              {syncStatus && (
+                <span className="text-xs text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 animate-fade-in">
+                  {syncStatus}
+                </span>
+              )}
+              <button
+                onClick={handleSyncToMongoDB}
+                disabled={isSyncing}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-stone-900 hover:bg-stone-800 disabled:opacity-60 text-white text-xs font-semibold shadow-xs transition cursor-pointer active:scale-95"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Saving...' : 'Sync Active Trip to MongoDB'}</span>
+              </button>
             </div>
           </div>
         </section>

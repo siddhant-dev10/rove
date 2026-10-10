@@ -82,6 +82,39 @@ export const BookingSummaryModal: React.FC = () => {
     setIsConfirmed(true);
     earnCredits(300, `Completed Entire Trip Reservation for ${trip.destination}`);
 
+    // Persist confirmed booking in MongoDB Atlas
+    fetch('/api/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tripId: trip.id,
+        destination: trip.destination,
+        hotel: {
+          name: trip.hotel.name,
+          cost: trip.hotel.totalCost,
+          nights: trip.hotel.nights,
+        },
+        transport: {
+          provider: trip.transport.provider,
+          mode: trip.transport.mode,
+          code: trip.transport.flightOrTrainNumber,
+          cost: trip.transport.cost,
+        },
+        dining: {
+          name: selectedDiningOption.name,
+          cost: trip.budget.foodCost,
+        },
+        localTransit: {
+          name: selectedTransitOption.name,
+          cost: trip.budget.localTransitCost,
+        },
+        totalCost: trip.budget.plannedCost,
+        travelers: trip.travelers,
+      }),
+    }).catch((err) => {
+      console.warn('MongoDB booking sync notice:', err);
+    });
+
     try {
       confetti({
         particleCount: 90,

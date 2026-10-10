@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { RoveProvider, useRove } from '@/context/RoveContext';
 import { BookingSummaryModal } from '@/components/BookingSummaryModal';
 import { CrowdIntelligence } from '@/components/CrowdIntelligence';
@@ -78,14 +79,9 @@ function RoveWorkspace() {
           </button>
 
           <div className="header-actions">
-            <button
-              className="header-icon-button hide-mobile"
-              onClick={() => handleDockTabChange('profile')}
-              title="Open your Rove profile"
-              aria-label="Open your Rove profile"
-            >
+            <Link href="/auth" className="header-icon-button hide-mobile" title="Log in or sign up" aria-label="Log in or sign up">
               <User size={17} />
-            </button>
+            </Link>
 
             <button
               className={isTravelModeActive ? 'live-button active' : 'live-button'}
@@ -131,6 +127,9 @@ function RoveWorkspace() {
             >
               <MessageCircle size={16} /> AI Chat Assistant
             </button>
+            <Link href="/auth" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>
+              <User size={16} /> Log in / Sign up
+            </Link>
             <button
               className="mobile-nav-link"
                 onClick={() => {
