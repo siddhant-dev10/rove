@@ -125,7 +125,7 @@ export const HERO_SLIDES: HeroSlide[] = [
 const SLIDE_DURATION_MS = 5000;
 
 export const HeroSlideshow: React.FC = () => {
-  const { setIsBookingOpen } = useRove();
+  const { setIsBookingOpen, isBookingOpen, switchTrip, activeTripId } = useRove();
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -134,9 +134,11 @@ export const HeroSlideshow: React.FC = () => {
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const goToSlide = useCallback((index: number) => {
-    setCurrentIdx((index + HERO_SLIDES.length) % HERO_SLIDES.length);
+    const nextIdx = (index + HERO_SLIDES.length) % HERO_SLIDES.length;
+    setCurrentIdx(nextIdx);
     setProgress(0);
-  }, []);
+    switchTrip(HERO_SLIDES[nextIdx].id);
+  }, [switchTrip]);
 
   const nextSlide = useCallback(() => {
     goToSlide(currentIdx + 1);
@@ -146,9 +148,18 @@ export const HeroSlideshow: React.FC = () => {
     goToSlide(currentIdx - 1);
   }, [currentIdx, goToSlide]);
 
-  // Continuous auto-play cycle
+  // Sync slide index if activeTripId changes externally
   useEffect(() => {
-    if (isPaused) {
+    const foundIdx = HERO_SLIDES.findIndex((s) => s.id === activeTripId);
+    if (foundIdx !== -1 && foundIdx !== currentIdx) {
+      setCurrentIdx(foundIdx);
+      setProgress(0);
+    }
+  }, [activeTripId, currentIdx]);
+
+  // Continuous auto-play cycle (pauses when user pauses or when booking modal is open)
+  useEffect(() => {
+    if (isPaused || isBookingOpen) {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
       return;
@@ -171,7 +182,7 @@ export const HeroSlideshow: React.FC = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
-  }, [currentIdx, isPaused, nextSlide]);
+  }, [currentIdx, isPaused, isBookingOpen, nextSlide]);
 
   const currentSlide = HERO_SLIDES[currentIdx];
 
@@ -274,7 +285,10 @@ export const HeroSlideshow: React.FC = () => {
                 <button
                   type="button"
                   className="hero-continue shadow-lg"
-                  onClick={() => setIsBookingOpen(true)}
+                  onClick={() => {
+                    switchTrip(currentSlide.id);
+                    setIsBookingOpen(true);
+                  }}
                 >
                   Continue to reserve <ArrowUpRight size={16} />
                 </button>
@@ -282,54 +296,59 @@ export const HeroSlideshow: React.FC = () => {
             </div>
           </div>
 
-          {/* Footer Row: Meta Information & Subtle Arrow Controls */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t border-white/15 pt-4">
-            <div className="hero-meta-row flex flex-wrap items-center gap-4 sm:gap-6 text-xs text-white/80">
-              <span className="inline-flex items-center gap-1.5">
-                <Navigation size={14} className="text-teal-300" />
-                {currentSlide.region}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <SunMedium size={14} className="text-amber-300" />
-                {currentSlide.weather}
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-amber-200">
-                <Star size={14} fill="currentColor" />
-                {currentSlide.score}/100 trip score
-              </span>
-            </div>
+          {/* Footer Row: Bottom Left Back Button & Bottom Right Forward Button */}
+          <div className="border-t border-white/15 pt-4">
+            <div className="flex items-center justify-between gap-4">
+              {/* Bottom Left: Back Navigation Button + Meta Tags */}
+              <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+                <button
+                  type="button"
+                  onClick={prevSlide}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/45 hover:bg-black/75 backdrop-blur-md border border-white/25 flex items-center justify-center text-white/90 hover:text-white transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg cursor-pointer shrink-0 group/btn"
+                  title="Previous slide"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft size={20} className="transition-transform group-hover/btn:-translate-x-0.5" />
+                </button>
 
-            {/* Prev/Next Chevrons & Play/Pause */}
-            <div className="flex items-center gap-2 self-end sm:self-auto">
-              <button
-                type="button"
-                onClick={() => setIsPaused(!isPaused)}
-                className="w-8 h-8 rounded-full bg-black/35 hover:bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/80 hover:text-white transition-all text-xs"
-                title={isPaused ? 'Resume auto-slideshow' : 'Pause slideshow'}
-                aria-label={isPaused ? 'Resume auto-slideshow' : 'Pause slideshow'}
-              >
-                {isPaused ? <Play size={12} fill="currentColor" /> : <Pause size={12} fill="currentColor" />}
-              </button>
+                <div className="hero-meta-row flex flex-wrap items-center gap-3 sm:gap-6 text-xs text-white/85">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Navigation size={13} className="text-teal-300" />
+                    {currentSlide.region}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <SunMedium size={13} className="text-amber-300" />
+                    {currentSlide.weather}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-amber-200">
+                    <Star size={13} fill="currentColor" />
+                    {currentSlide.score}/100 trip score
+                  </span>
+                </div>
+              </div>
 
-              <button
-                type="button"
-                onClick={prevSlide}
-                className="w-8 h-8 rounded-full bg-black/35 hover:bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/80 hover:text-white transition-all hover:scale-105"
-                title="Previous slide"
-                aria-label="Previous slide"
-              >
-                <ChevronLeft size={16} />
-              </button>
+              {/* Bottom Right: Play/Pause Toggle + Forward Navigation Button */}
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsPaused(!isPaused)}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/80 hover:text-white transition-all text-xs cursor-pointer"
+                  title={isPaused ? 'Resume auto-slideshow' : 'Pause slideshow'}
+                  aria-label={isPaused ? 'Resume auto-slideshow' : 'Pause slideshow'}
+                >
+                  {isPaused ? <Play size={12} fill="currentColor" /> : <Pause size={12} fill="currentColor" />}
+                </button>
 
-              <button
-                type="button"
-                onClick={nextSlide}
-                className="w-8 h-8 rounded-full bg-black/35 hover:bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/80 hover:text-white transition-all hover:scale-105"
-                title="Next slide"
-                aria-label="Next slide"
-              >
-                <ChevronRight size={16} />
-              </button>
+                <button
+                  type="button"
+                  onClick={nextSlide}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/45 hover:bg-black/75 backdrop-blur-md border border-white/25 flex items-center justify-center text-white/90 hover:text-white transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg cursor-pointer shrink-0 group/btn"
+                  title="Next slide"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight size={20} className="transition-transform group-hover/btn:translate-x-0.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
