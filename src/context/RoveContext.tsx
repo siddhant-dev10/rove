@@ -12,6 +12,7 @@ import {
   BookingTransportOption,
   BookingDiningOption,
   BookingLocalTransitOption,
+  BookedTicket,
 } from '@/types/rove';
 import {
   initialGoaTrip,
@@ -21,33 +22,11 @@ import {
   sampleNegotiationTradeoffs,
   initialBadges,
   initialStamps,
-  destinationBookingCatalog,
   DestinationCatalog,
 } from '@/data/mockData';
-import {
-  initialJaipurTrip,
-  initialManaliTrip,
-  initialKeralaTrip,
-  initialUdaipurTrip,
-  initialKashmirTrip,
-  slideshowBookingCatalog,
-} from '@/data/slideshowTrips';
 
-export const allTripsMap: Record<string, Trip> = {
-  goa: initialGoaTrip,
-  jaipur: initialJaipurTrip,
-  manali: initialManaliTrip,
-  kerala: initialKeralaTrip,
-  udaipur: initialUdaipurTrip,
-  kashmir: initialKashmirTrip,
-  ladakh: initialLadakhTrip,
-  bali: initialBaliTrip,
-};
-
-export const allBookingCatalog: Record<string, DestinationCatalog> = {
-  ...destinationBookingCatalog,
-  ...slideshowBookingCatalog,
-};
+import { allTripsMap, allBookingCatalog } from '@/data/allTripsCatalog';
+export { allTripsMap, allBookingCatalog };
 
 interface RoveContextType {
   trip: Trip;
@@ -100,6 +79,12 @@ interface RoveContextType {
   setIsNegotiationOpen: (open: boolean) => void;
   isBookingOpen: boolean;
   setIsBookingOpen: (open: boolean) => void;
+  isTicketHubOpen: boolean;
+  setIsTicketHubOpen: (open: boolean) => void;
+  isAiPlanModalOpen: boolean;
+  setIsAiPlanModalOpen: (open: boolean) => void;
+  bookedTickets: BookedTicket[];
+  addBookedTickets: (tickets: BookedTicket[]) => void;
   isWalletOpen: boolean;
   setIsWalletOpen: (open: boolean) => void;
   isPassportOpen: boolean;
@@ -143,6 +128,14 @@ export const RoveProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isBudgetEditorOpen, setIsBudgetEditorOpen] = useState(false);
   const [isNegotiationOpen, setIsNegotiationOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isTicketHubOpen, setIsTicketHubOpen] = useState(false);
+  const [isAiPlanModalOpen, setIsAiPlanModalOpen] = useState(false);
+  const [bookedTickets, setBookedTickets] = useState<BookedTicket[]>([]);
+
+  const addBookedTickets = (tickets: BookedTicket[]) => {
+    setBookedTickets((prev) => [...tickets, ...prev]);
+    earnCredits(tickets.length * 75, `AI Agent Booked ${tickets.length} Tickets`);
+  };
   const [isWalletOpen, setIsWalletOpen] = useState(false);
   const [isPassportOpen, setIsPassportOpen] = useState(false);
   const [isPackingOpen, setIsPackingOpen] = useState(false);
@@ -566,7 +559,7 @@ export const RoveProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Chat engine
-  const sendChatMessage = (text: string) => {
+  const sendChatMessage = async (text: string) => {
     const userMsg: ChatMessage = {
       id: `msg-user-${Date.now()}`,
       sender: 'user',
@@ -576,6 +569,42 @@ export const RoveProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setChatMessages((prev) => [...prev, userMsg]);
     setIsAiThinking(true);
+
+    try {
+      const res = await fetch('/api/agent/orchestrate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: text,
+          activeTripId,
+          tripContext: trip,
+          passenger: {
+            name: 'Siddhant Sharma',
+            email: 'siddhant@rove.ai',
+            phone: '+91 98201 55432',
+          },
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const aiReply: ChatMessage = {
+          id: `msg-ai-${Date.now()}`,
+          sender: 'rove-ai',
+          text: data.replyText,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          diffSummary: data.diffSummary || undefined,
+          cards: data.cards || undefined,
+          bookingProposal: data.bookingProposal || undefined,
+        };
+
+        setChatMessages((prev) => [...prev, aiReply]);
+        setIsAiThinking(false);
+        return;
+      }
+    } catch (err) {
+      console.warn('Orchestrator API call failed, falling back to local reasoning:', err);
+    }
 
     const lower = text.toLowerCase();
 
@@ -613,8 +642,62 @@ export const RoveProvider: React.FC<{ children: React.ReactNode }> = ({ children
         replyText =
           '💎 Added 2 high-conviction hidden gems: Secret Chorão Island Bird Sanctuary Kayak (4.9★, zero tourist crowds) and a 1928 heritage bakery run by fourth-generation Goan artisans.';
         diff = 'Injected 2 verified local spots | Crowd index reduced by 34%';
+      } else if (lower.includes('book') || lower.includes('ticket') || lower.includes('bus') || lower.includes('table') || lower.includes('dine') || lower.includes('flight') || lower.includes('train')) {
+        const isDine = lower.includes('table') || lower.includes('thalassa') || lower.includes('dine') || lower.includes('restaurant');
+        const isTrain = lower.includes('train') || lower.includes('vande bharat');
+        const isFlight = lower.includes('flight');
+
+        let bookedCategory: 'bus' | 'flight' | 'train' | 'hotel' | 'dining' = 'bus';
+        let itemTitle = 'IntrCity SmartBus Volvo 9600 Multi-Axle Sleeper';
+        let pnr = `BUS-AGNT-${Math.floor(1000 + Math.random() * 9000)}`;
+        let cost = 1650;
+
+        if (isDine) {
+          bookedCategory = 'dining';
+          itemTitle = 'Thalassa Waterfront Greek Taverna (Reserved Sunset Table)';
+          pnr = `DINE-VIP-${Math.floor(1000 + Math.random() * 9000)}`;
+          cost = 1800;
+        } else if (isTrain) {
+          bookedCategory = 'train';
+          itemTitle = 'Vande Bharat Superfast Express (Executive Chair Car)';
+          pnr = `IRCTC-9042${Math.floor(100000 + Math.random() * 900000)}`;
+          cost = 2900;
+        } else if (isFlight) {
+          bookedCategory = 'flight';
+          itemTitle = 'IndiGo Airlines (Direct 6E-204)';
+          pnr = `6E-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          cost = 4200;
+        } else if (lower.includes('hotel') || lower.includes('stay')) {
+          bookedCategory = 'hotel';
+          itemTitle = `${trip.hotel.name} (Heritage Courtyard Suite)`;
+          pnr = `ROV-HTL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          cost = trip.hotel.totalCost;
+        }
+
+        const newTicket: BookedTicket = {
+          id: `tkt-chat-${Date.now()}`,
+          category: bookedCategory,
+          referenceNumber: pnr,
+          title: itemTitle,
+          subtitle: `Booked by AI Agent for ${trip.destination}`,
+          date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+          time: 'Confirmed Allocation',
+          status: 'confirmed',
+          cost,
+          passengerOrGuest: {
+            name: 'Rove Traveler',
+            contact: '+91 98201 55432',
+            seatsOrRooms: 'Confirmed Allocation',
+          },
+          details: { destination: trip.destination, bookedVia: 'Rove Agent Chat' },
+          bookedAt: new Date().toISOString(),
+        };
+
+        addBookedTickets([newTicket]);
+        replyText = `🎫 Booking Confirmed! The AI Agent has locked your reservation for "${itemTitle}". Your verified PNR is ${pnr}. Total fare: ₹${cost.toLocaleString('en-IN')}. I have synchronized this ticket with the Ticket Studio.`;
+        diff = `AI Agent booked ${bookedCategory.toUpperCase()} | PNR: ${pnr}`;
       } else {
-        replyText = `Understood: "${text}". I have cross-checked your ₹15,000 budget and geographic coordinates. The itinerary is re-aligned with minimum transit overhead.`;
+        replyText = `Understood: "${text}". I have cross-checked your ₹${trip.budget.totalBudget.toLocaleString('en-IN')} budget and geographic coordinates. The itinerary is re-aligned with minimum transit overhead.`;
         diff = 'AI validated routes & budget alignment';
       }
 
@@ -823,6 +906,12 @@ export const RoveProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsNegotiationOpen,
         isBookingOpen,
         setIsBookingOpen,
+        isTicketHubOpen,
+        setIsTicketHubOpen,
+        isAiPlanModalOpen,
+        setIsAiPlanModalOpen,
+        bookedTickets,
+        addBookedTickets,
         isWalletOpen,
         setIsWalletOpen,
         isPassportOpen,

@@ -25,10 +25,12 @@ import { ProfileSection } from '@/components/ProfileSection';
 import { ChatSection } from '@/components/ChatSection';
 import { AboutSection } from '@/components/AboutSection';
 import { HeroSlideshow } from '@/components/HeroSlideshow';
+import { TicketBookingHub } from '@/components/TicketBookingHub';
+import { EditorialLandingSections } from '@/components/EditorialLandingSections';
 import {
   ArrowUpRight, CalendarDays, Check, ChevronRight, Compass, CreditCard,
   Map, Menu, MessageCircle, MoreHorizontal, Navigation,
-  Sparkles, Wallet, X, LockKeyhole, User, Pencil,
+  Sparkles, Wallet, X, LockKeyhole, User, Pencil, Ticket,
 } from 'lucide-react';
 
 type WorkspaceView = 'overview' | 'itinerary' | 'map' | 'budget';
@@ -46,6 +48,7 @@ function RoveWorkspace() {
     isTravelModeActive, setIsTravelModeActive,
     setIsBookingOpen, setIsConciergeOpen, setIsDemoTourOpen,
     toggleLockHotel, reoptimizeTrip, setIsBudgetEditorOpen,
+    setIsTicketHubOpen, bookedTickets,
   } = useRove();
   const { user, isAuthenticated } = useAuth();
 
@@ -106,6 +109,20 @@ function RoveWorkspace() {
             </button>
 
             <button
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-stone-300 text-stone-800 hover:bg-stone-100 hover:border-stone-400 transition shadow-2xs hide-mobile cursor-pointer"
+              onClick={() => setIsTicketHubOpen(true)}
+              title="Open Ticket Booking Studio (Buses, Flights, Trains, Hotels, Dining)"
+            >
+              <Ticket size={14} className="text-amber-600" />
+              <span>Ticket Studio</span>
+              {bookedTickets.length > 0 && (
+                <span className="h-4 min-w-[16px] px-1 rounded-full bg-emerald-600 text-white text-[9px] flex items-center justify-center font-bold">
+                  {bookedTickets.length}
+                </span>
+              )}
+            </button>
+
+            <button
               className="reserve-button hide-mobile"
               onClick={() => setIsBookingOpen(true)}
             >
@@ -124,6 +141,15 @@ function RoveWorkspace() {
 
         {mobileMenuOpen && (
           <div className="mobile-nav">
+            <button
+              className="mobile-nav-link"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setIsTicketHubOpen(true);
+              }}
+            >
+              <Ticket size={16} /> Ticket Booking Studio & AI Agent
+            </button>
             <button
               className="mobile-nav-link"
               onClick={() => {
@@ -420,8 +446,11 @@ function RoveWorkspace() {
               )}
             </section>
 
+            {/* EDITORIAL LANDING SECTIONS (SEARCH HERO, ESCAPES, UNDER 5K, STORIES, TRUST) */}
+            <EditorialLandingSections />
+
             {/* DEDICATED ABOUT SECTION AT THE VERY BOTTOM OF HOME */}
-          <AboutSection />
+            <AboutSection />
 
         </div>
         )}
@@ -446,6 +475,7 @@ function RoveWorkspace() {
       <DockMenu activeTab={dockTab} onTabChange={handleDockTabChange} />
 
       {/* MODALS */}
+      <TicketBookingHub />
       <BookingSummaryModal />
       <RoveWalletModal />
       <RovePassportModal />

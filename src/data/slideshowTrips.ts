@@ -1,5 +1,6 @@
 import { Trip } from '@/types/rove';
 import { DestinationCatalog } from '@/data/mockData';
+import { allBusesCatalog } from '@/data/busCatalog';
 
 // ==========================================
 // 1. JAIPUR TRIP
@@ -694,6 +695,7 @@ export const initialKashmirTrip: Trip = {
 // ==========================================
 export const slideshowBookingCatalog: Record<string, DestinationCatalog> = {
   jaipur: {
+    buses: allBusesCatalog.jaipur,
     hotels: [
       {
         ...initialJaipurTrip.hotel,
@@ -811,6 +813,7 @@ export const slideshowBookingCatalog: Record<string, DestinationCatalog> = {
   },
 
   manali: {
+    buses: allBusesCatalog.manali,
     hotels: [
       {
         ...initialManaliTrip.hotel,
@@ -869,6 +872,7 @@ export const slideshowBookingCatalog: Record<string, DestinationCatalog> = {
   },
 
   kerala: {
+    buses: allBusesCatalog.kerala,
     hotels: [
       {
         ...initialKeralaTrip.hotel,
@@ -927,6 +931,7 @@ export const slideshowBookingCatalog: Record<string, DestinationCatalog> = {
   },
 
   udaipur: {
+    buses: allBusesCatalog.udaipur,
     hotels: [
       {
         ...initialUdaipurTrip.hotel,
@@ -1006,6 +1011,7 @@ export const slideshowBookingCatalog: Record<string, DestinationCatalog> = {
   },
 
   kashmir: {
+    buses: allBusesCatalog.kashmir,
     hotels: [
       {
         ...initialKashmirTrip.hotel,

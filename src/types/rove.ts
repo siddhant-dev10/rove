@@ -166,6 +166,18 @@ export interface NegotiationTradeoff {
   recommended?: boolean;
 }
 
+export interface AgentUiCard {
+  id: string;
+  type: 'flight' | 'train' | 'bus' | 'hotel' | 'dining' | 'weather' | 'route' | 'itinerary' | 'booking_review';
+  title: string;
+  subtitle: string;
+  price?: number;
+  badge?: string;
+  details: Record<string, unknown>;
+  actionLabel?: string;
+  actionPayload?: Record<string, unknown>;
+}
+
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'rove-ai' | 'system';
@@ -173,6 +185,12 @@ export interface ChatMessage {
   timestamp: string;
   diffSummary?: string;
   savingsApplied?: number;
+  cards?: AgentUiCard[];
+  bookingProposal?: {
+    items: unknown[];
+    totalCost: number;
+    requiresApproval: boolean;
+  };
   actions?: {
     label: string;
     actionKey: string;
@@ -240,6 +258,32 @@ export interface BookingDiningOption {
   highlights: string[];
   whySelected: string;
   originalPrice?: number;
+  availableSlots?: string[]; // e.g. ['07:00 PM', '08:15 PM', '09:30 PM']
+  tableTypes?: string[]; // e.g. ['Waterfront Sunset Deck', 'Courtyard Garden', 'Chef’s Table']
+  reservationDeposit?: number;
+}
+
+export interface BookingBusOption {
+  id: string;
+  operator: string;
+  busType: string;
+  departure: string;
+  departureTime: string;
+  arrival: string;
+  arrivalTime: string;
+  duration: string;
+  fare: number;
+  rating: number;
+  reviewCount: number;
+  boardingPoints: string[];
+  droppingPoints: string[];
+  seatType: 'Single Upper Sleeper' | 'Double Lower Sleeper' | 'Semi-Sleeper Recliner' | 'Panoramic Window';
+  availableSeats: number;
+  amenities: string[];
+  badge?: string;
+  photos: BookingPhoto[];
+  whySelected: string;
+  originalPrice?: number;
 }
 
 export interface BookingLocalTransitOption {
@@ -254,3 +298,79 @@ export interface BookingLocalTransitOption {
   whySelected: string;
   originalPrice?: number;
 }
+
+export interface BookedTicket {
+  id: string;
+  category: 'bus' | 'flight' | 'train' | 'hotel' | 'dining';
+  referenceNumber: string; // PNR or Reservation Code
+  title: string;
+  subtitle: string;
+  date: string;
+  time?: string;
+  status: 'confirmed' | 'pending' | 'cancelled';
+  cost: number;
+  passengerOrGuest: {
+    name: string;
+    contact?: string;
+    seatsOrRooms?: string;
+  };
+  details: Record<string, unknown>;
+  bookedAt: string;
+}
+
+export interface AgentBookingRequest {
+  action: 'book_single' | 'book_entire_trip';
+  tripId?: string;
+  destination: string;
+  passenger: {
+    name: string;
+    email: string;
+    phone: string;
+    count: number;
+  };
+  items: {
+    category: 'bus' | 'flight' | 'train' | 'hotel' | 'dining';
+    itemId: string;
+    title: string;
+    cost: number;
+    preferredSlotOrSeat?: string;
+    notes?: string;
+  }[];
+}
+
+export interface AgentBookingResult {
+  success: boolean;
+  bookingReference: string;
+  message: string;
+  bookedTickets: BookedTicket[];
+  totalCost: number;
+  executionSteps: {
+    step: string;
+    status: 'completed' | 'in_progress';
+    timestamp: string;
+    detail: string;
+  }[];
+}
+
+export interface AgentPlanRequest {
+  destination: string;
+  daysCount: number;
+  budget: number;
+  travelers: TravelerConfig;
+  preferredTransport?: 'any' | 'flight' | 'train' | 'bus';
+  travelStyle?: TravelStyle;
+  specialRequests?: string;
+}
+
+export interface AgentPlanResponse {
+  success: boolean;
+  trip: Trip;
+  recommendedTickets: {
+    transport: BookingTransportOption | BookingBusOption;
+    transportType: 'flight' | 'train' | 'bus';
+    hotel: BookingHotelOption;
+    dining: BookingDiningOption;
+  };
+  aiReasoning: string;
+}
+

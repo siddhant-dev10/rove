@@ -42,6 +42,7 @@ export const BookingSummaryModal: React.FC = () => {
     selectLocalTransitOption,
     updateCustomPrice,
     earnCredits,
+    setIsTicketHubOpen,
   } = useRove();
 
   const [activeTab, setActiveTab] = useState<BookingCategoryTab>('overview');
@@ -169,13 +170,25 @@ export const BookingSummaryModal: React.FC = () => {
             </div>
           </div>
 
-          <button
-            onClick={handleClose}
-            className="rounded-full bg-stone-100 p-2 text-stone-600 hover:bg-stone-200 hover:text-stone-900 transition active:scale-95 cursor-pointer"
-            aria-label="Close modal"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                handleClose();
+                setIsTicketHubOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 transition cursor-pointer"
+            >
+              <Ticket className="h-3.5 w-3.5" />
+              <span>AI Ticket Studio</span>
+            </button>
+            <button
+              onClick={handleClose}
+              className="rounded-full bg-stone-100 p-2 text-stone-600 hover:bg-stone-200 hover:text-stone-900 transition active:scale-95 cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {/* Category Tabs (if not confirmed yet) */}

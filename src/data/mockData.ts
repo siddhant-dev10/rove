@@ -5,9 +5,11 @@ import {
   PassportStamp,
   BookingHotelOption,
   BookingTransportOption,
+  BookingBusOption,
   BookingDiningOption,
   BookingLocalTransitOption,
 } from '@/types/rove';
+import { allBusesCatalog } from '@/data/busCatalog';
 
 export const initialGoaTrip: Trip = {
   id: 'trip-goa-hackathon-01',
@@ -1319,12 +1321,14 @@ export const initialStamps: PassportStamp[] = [
 export interface DestinationCatalog {
   hotels: BookingHotelOption[];
   transports: BookingTransportOption[];
+  buses?: BookingBusOption[];
   dining: BookingDiningOption[];
   localTransit: BookingLocalTransitOption[];
 }
 
 export const destinationBookingCatalog: Record<string, DestinationCatalog> = {
   goa: {
+    buses: allBusesCatalog.goa,
     hotels: [
       {
         id: 'hotel-goa-01',
@@ -1916,6 +1920,7 @@ export const destinationBookingCatalog: Record<string, DestinationCatalog> = {
     ],
   },
   ladakh: {
+    buses: allBusesCatalog.ladakh,
     hotels: [
       {
         id: 'hotel-ldk-01',
@@ -2178,6 +2183,7 @@ export const destinationBookingCatalog: Record<string, DestinationCatalog> = {
     ],
   },
   bali: {
+    buses: allBusesCatalog.bali,
     hotels: [
       {
         id: 'hotel-bali-01',
