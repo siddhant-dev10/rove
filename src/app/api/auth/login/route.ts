@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import clientPromise from '@/lib/mongodb';
 import { verifyPassword, createSessionToken, SESSION_COOKIE_NAME, getSessionCookieOptions } from '@/lib/auth';
+import { findUserByEmail } from '@/lib/userStore';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,13 +18,9 @@ export async function POST(request: Request) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const client = await clientPromise;
-    const dbName = process.env.MONGODB_DB || 'rove_db';
-    const db = client.db(dbName);
-    const usersCollection = db.collection('users');
 
-    // Retrieve user by email
-    const user = await usersCollection.findOne({ email: normalizedEmail });
+    // Retrieve user via userStore (queries MongoDB Atlas, falls back to persistent store)
+    const user = await findUserByEmail(normalizedEmail);
     if (!user || !user.passwordHash) {
       return NextResponse.json(
         { success: false, error: 'We could not match that email and password. Please check your details.' },
@@ -32,7 +28,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify password hash
+    // Verify password hash with constant-time equality
     const isValid = verifyPassword(password, user.passwordHash);
     if (!isValid) {
       return NextResponse.json(
@@ -41,8 +37,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const userId = user._id.toString();
-    const token = createSessionToken({ userId, email: user.email, name: user.name });
+    const token = createSessionToken({
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+    });
 
     // Set secure HTTP-only cookie
     const cookieStore = await cookies();
@@ -51,8 +50,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: `Welcome back, ${user.name.split(' ')[0]}`,
+      storageProvider: user.storageProvider,
       user: {
-        id: userId,
+        id: user.id,
         name: user.name,
         email: user.email,
       },

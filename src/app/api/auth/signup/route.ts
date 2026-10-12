@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import clientPromise from '@/lib/mongodb';
 import { hashPassword, createSessionToken, SESSION_COOKIE_NAME, getSessionCookieOptions } from '@/lib/auth';
+import { findUserByEmail, createUser } from '@/lib/userStore';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,13 +23,9 @@ export async function POST(request: Request) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const client = await clientPromise;
-    const dbName = process.env.MONGODB_DB || 'rove_db';
-    const db = client.db(dbName);
-    const usersCollection = db.collection('users');
 
     // Check if user already exists
-    const existing = await usersCollection.findOne({ email: normalizedEmail });
+    const existing = await findUserByEmail(normalizedEmail);
     if (existing) {
       return NextResponse.json(
         { success: false, error: 'An account with this email address already exists. Please log in.' },
@@ -37,19 +33,22 @@ export async function POST(request: Request) {
       );
     }
 
-    // Hash password and store in MongoDB
+    // Hash password using native Scrypt + salt
     const passwordHash = hashPassword(password);
-    const now = new Date().toISOString();
-    const result = await usersCollection.insertOne({
+
+    // Persist user record in MongoDB (with persistent local fallback)
+    const newUser = await createUser({
       name: name.trim(),
       email: normalizedEmail,
       passwordHash,
-      createdAt: now,
-      updatedAt: now,
     });
 
-    const userId = result.insertedId.toString();
-    const token = createSessionToken({ userId, email: normalizedEmail, name: name.trim() });
+    // Create signed HMAC-SHA256 session token
+    const token = createSessionToken({
+      userId: newUser.id,
+      email: newUser.email,
+      name: newUser.name,
+    });
 
     // Set secure HTTP-only cookie
     const cookieStore = await cookies();
@@ -58,10 +57,11 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: 'Account created successfully',
+      storageProvider: newUser.storageProvider,
       user: {
-        id: userId,
-        name: name.trim(),
-        email: normalizedEmail,
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
       },
     });
   } catch (error: unknown) {
